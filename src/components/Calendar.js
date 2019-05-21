@@ -77,12 +77,13 @@ class Calendar extends PureComponent {
       calendarHeight: longMonthHeight || 300,
     };
   }
+
   focusToDate(date, props = this.props, preventUnnecessary = true) {
     if (!props.scroll.enabled) {
       this.setState({ focusedDate: date });
       return;
     }
-    const targetMonthIndex = differenceInCalendarMonths(date, props.minDate, this.dateOptions);
+    const targetMonthIndex = differenceInCalendarMonths(date, Math.min(props.minDate, props.globalMinDate), this.dateOptions);
     const visibleMonths = this.list.getVisibleRange();
     if (preventUnnecessary && visibleMonths.includes(targetMonthIndex)) return;
     this.list.scrollTo(targetMonthIndex);
@@ -113,7 +114,7 @@ class Calendar extends PureComponent {
   componentDidMount() {
     if (this.props.scroll.enabled) {
       // prevent react-list's initial render focus problem
-      setTimeout(() => this.focusToDate(this.state.focusedDate), 1);
+      setTimeout(() => this.focusToDate(this.state.focusedDate), 15);
     }
   }
   componentWillReceiveProps(nextProps) {
@@ -329,14 +330,14 @@ class Calendar extends PureComponent {
   }
 
   estimateMonthSize(index, cache) {
-    const { direction, minDate } = this.props;
+    const { direction, minDate, globalMinDate } = this.props;
     const { scrollArea } = this.state;
     if (cache) {
       this.listSizeCache = cache;
       if (cache[index]) return cache[index];
     }
     if (direction === 'horizontal') return scrollArea.monthWidth;
-    const monthStep = addMonths(minDate, index);
+    const monthStep = addMonths(Math.min(minDate, globalMinDate), index);
     const { start, end } = getMonthDisplayRange(monthStep, this.dateOptions);
     const isLongMonth = differenceInDays(end, start, this.dateOptions) + 1 > 7 * 5;
     return isLongMonth ? scrollArea.longMonthHeight : scrollArea.monthHeight;
@@ -356,11 +357,12 @@ class Calendar extends PureComponent {
       minDate,
       rangeColors,
       color,
+      globalMaxDate,
+      globalMinDate,
     } = this.props;
     const { scrollArea, focusedDate } = this.state;
     const isVertical = direction === 'vertical';
     const navigatorRenderer = this.props.navigatorRenderer || this.renderMonthAndYear;
-
     const ranges = this.props.ranges.map((range, i) => ({
       ...range,
       color: range.color || rangeColors[i] || color,
@@ -389,18 +391,18 @@ class Calendar extends PureComponent {
               }}
               onScroll={this.handleScroll}>
               <ReactList
-                length={differenceInCalendarMonths(
-                  endOfMonth(maxDate),
-                  addDays(startOfMonth(minDate), -1),
+                length={Math.abs(differenceInCalendarMonths(
+                  endOfMonth(Math.max(maxDate, globalMaxDate)),
+                  addDays(startOfMonth(Math.min(minDate, globalMinDate)), -1),
                   this.dateOptions
-                )}
+                ))}
                 treshold={500}
                 type="variable"
                 ref={target => (this.list = target)}
                 itemSizeEstimator={this.estimateMonthSize}
                 axis={isVertical ? 'y' : 'x'}
                 itemRenderer={(index, key) => {
-                  const monthStep = addMonths(minDate, index);
+                  const monthStep = addMonths(Math.min(minDate, globalMinDate), index);
                   return (
                     <Month
                       {...this.props}
@@ -485,6 +487,8 @@ Calendar.defaultProps = {
     enabled: false,
   },
   direction: 'vertical',
+  globalMinDate: new Date(),
+  globalMaxDate: new Date(),
   maxDate: addYears(new Date(), 20),
   minDate: addYears(new Date(), -100),
   rangeColors: ['#3d91ff', '#3ecf8e', '#fed14c'],
@@ -497,6 +501,8 @@ Calendar.propTypes = {
   disabledDates: PropTypes.array,
   minDate: PropTypes.object,
   maxDate: PropTypes.object,
+  globalMinDate: PropTypes.object,
+  globalMaxDate: PropTypes.object,
   date: PropTypes.object,
   onChange: PropTypes.func,
   onPreviewChange: PropTypes.func,
