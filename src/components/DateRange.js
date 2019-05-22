@@ -22,7 +22,7 @@ class DateRange extends Component {
   }
   calcNewSelection(value, isSingleValue = true) {
     const focusedRange = this.props.focusedRange || this.state.focusedRange;
-    const { ranges, onChange, maxDate, moveRangeOnFirstSelection, disabledDates } = this.props;
+    const { ranges, onChange, maxDate, globalMaxDate, moveRangeOnFirstSelection, disabledDates } = this.props;
     const focusedRangeIndex = focusedRange[0];
     const selectedRange = ranges[focusedRangeIndex];
     if (!selectedRange || !onChange) return {};
@@ -38,7 +38,7 @@ class DateRange extends Component {
       const dayOffset = differenceInCalendarDays(endDate, startDate);
       startDate = value;
       endDate = moveRangeOnFirstSelection ? addDays(value, dayOffset) : value;
-      if (maxDate) endDate = min([endDate, maxDate]);
+      if (maxDate) endDate = min([endDate, maxDate, globalMaxDate]);
       nextFocusRange = [focusedRange[0], 1];
     } else {
       endDate = value;

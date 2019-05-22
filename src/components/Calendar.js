@@ -162,9 +162,9 @@ class Calendar extends PureComponent {
     }
   }
   renderMonthAndYear(focusedDate, changeShownDate, props) {
-    const { showMonthArrow, locale, minDate, maxDate, showMonthAndYearPickers } = props;
-    const upperYearLimit = (maxDate || Calendar.defaultProps.maxDate).getFullYear();
-    const lowerYearLimit = (minDate || Calendar.defaultProps.minDate).getFullYear();
+    const { showMonthArrow, locale, minDate, maxDate, globalMaxDate, globalMinDate, showMonthAndYearPickers, hideMonthName } = props;
+    const upperYearLimit = (new Date(Math.max(maxDate, globalMaxDate)) || Calendar.defaultProps.maxDate).getFullYear();
+    const lowerYearLimit = (new Date(Math.min(minDate, globalMinDate)) || Calendar.defaultProps.minDate).getFullYear();
     const styles = this.styles;
     return (
       <div onMouseUp={e => e.stopPropagation()} className={styles.monthAndYearWrapper}>
@@ -207,7 +207,7 @@ class Calendar extends PureComponent {
               </select>
             </span>
           </span>
-        ) : (
+        ) : !hideMonthName && (
           <span className={styles.monthAndYearPickers}>
             {locale.localize.months()[focusedDate.getMonth()]} {focusedDate.getFullYear()}
           </span>
@@ -232,7 +232,7 @@ class Calendar extends PureComponent {
           end: endOfWeek(now, this.dateOptions),
         }).map((day, i) => (
           <span className={this.styles.weekDay} key={i}>
-            {format(day, 'ddd', this.dateOptions)}
+            {format(day, this.props.weekDateFormat, this.dateOptions)}
           </span>
         ))}
       </div>
@@ -359,6 +359,7 @@ class Calendar extends PureComponent {
       color,
       globalMaxDate,
       globalMinDate,
+      hideMonthName,
     } = this.props;
     const { scrollArea, focusedDate } = this.state;
     const isVertical = direction === 'vertical';
@@ -375,7 +376,7 @@ class Calendar extends PureComponent {
           this.setState({ drag: { status: false, range: {} } });
         }}>
         {showDateDisplay && this.renderDateDisplay()}
-        {navigatorRenderer(focusedDate, this.changeShownDate, this.props)}
+        {!hideMonthName && navigatorRenderer(focusedDate, this.changeShownDate, this.props)}
         {scroll.enabled ? (
           <div>
             {isVertical && this.renderWeekdays(this.dateOptions)}
@@ -482,10 +483,12 @@ Calendar.defaultProps = {
   showPreview: true,
   displayMode: 'date',
   months: 1,
+  hideMonthName: false,
   color: '#3d91ff',
   scroll: {
     enabled: false,
   },
+  weekDateFormat: 'ddd',
   direction: 'vertical',
   globalMinDate: new Date(),
   globalMaxDate: new Date(),
@@ -496,6 +499,7 @@ Calendar.defaultProps = {
 };
 
 Calendar.propTypes = {
+  weekDateFormat: PropTypes.string,
   showMonthArrow: PropTypes.bool,
   showMonthAndYearPickers: PropTypes.bool,
   disabledDates: PropTypes.array,
@@ -517,6 +521,7 @@ Calendar.propTypes = {
     endDate: PropTypes.object,
     color: PropTypes.string,
   }),
+  hideMonthName: PropTypes.bool,
   dateDisplayFormat: PropTypes.string,
   monthDisplayFormat: PropTypes.string,
   focusedRange: PropTypes.arrayOf(PropTypes.number),
