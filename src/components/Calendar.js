@@ -85,7 +85,7 @@ class Calendar extends PureComponent {
     }
     const targetMonthIndex = differenceInCalendarMonths(date, Math.min(props.minDate, props.globalMinDate), this.dateOptions);
     const visibleMonths = this.list.getVisibleRange();
-    if (preventUnnecessary && visibleMonths.includes(targetMonthIndex)) return;
+    if (preventUnnecessary && visibleMonths[0] <= targetMonthIndex && visibleMonths[1] >= targetMonthIndex) return;
     this.list.scrollTo(targetMonthIndex);
     this.setState({ focusedDate: date });
   }
@@ -97,7 +97,10 @@ class Calendar extends PureComponent {
         }
       : props;
     const newFocus = calcFocusDate(this.state.focusedDate, newProps);
-    this.focusToDate(newFocus, newProps);
+
+
+    // will fix 
+    //this.focusToDate(newFocus, newProps);
   }
   updatePreview(val) {
     if (!val) {
@@ -142,6 +145,7 @@ class Calendar extends PureComponent {
       setYear: () => setYear(focusedDate, value),
       set: () => value,
     };
+
     const newDate = min([max([modeMapper[mode](), minDate]), maxDate]);
     this.focusToDate(newDate, this.props, false);
     onShownDateChange && onShownDateChange(newDate);
