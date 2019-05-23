@@ -246,7 +246,7 @@ class Calendar extends PureComponent {
     const { focusedRange, color, ranges, rangeColors, dateDisplayFormatter } = this.props;
     const defaultColor = rangeColors[focusedRange[0]] || color;
     const styles = this.styles;
-    debugger
+
     return (
       <div className={styles.dateDisplayWrapper}>
         {ranges.map((range, i) => {
